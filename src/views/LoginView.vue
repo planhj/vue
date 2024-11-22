@@ -84,7 +84,6 @@ export default {
         const response = await this.$axios.post('/auth/login', loginData);
         const userId = response.data.user_id;
         sessionStorage.setItem('user_id', userId);
-        console.log(response.data);
         if (response.data.role) {
           const role = response.data.role;
           if (role === 'teacher') {

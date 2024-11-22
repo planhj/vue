@@ -4,7 +4,17 @@
       <UserProfile v-if="activeTab === 'profile'" :user="user" />
       <div v-if="activeTab === 'courses'">
         <h2>我的课程</h2>
-        <!-- 课程列表内容 -->
+        <div class="course-list">
+          <div v-if="courses.length === 0" class="no-courses">
+            暂无课程信息
+          </div>
+          <div v-else v-for="course in courses" :key="course.course_id" class="course-card" @click="goToCoursePage(course.course_id,course.course_name,user.role)">
+            <div class="course-info">
+              <h3>{{ course.course_name }}</h3>
+            </div>
+          </div>
+
+        </div>
       </div>
       <MySchedule v-if="activeTab === 'schedule'" :courses="courses" />
       <div v-if="activeTab === 'publishNotification'">
@@ -47,6 +57,7 @@ export default {
         role: ''
       },
       courses: [],
+      message:'',
       activeTab:'courses',
       activeSubTab: '',
       announcement: {/* 公告数据 */}
@@ -72,10 +83,15 @@ export default {
           .catch(error => {
             console.error('获取数据失败:', error);
           });
-      this.$axios.get(`/course/send_courses/${userId}`)
+      this.$axios.get(`/course/send_teacher_courses/${userId}`)
           .then(response => {
-            this.courses = response.data;
-            console.log(this.courses);
+            if (response.data.error) {
+              this.message = response.data.error;
+            } else if (response.data.message) {
+              this.message = response.data.message;
+            } else {
+              this.courses = response.data;
+            }
           })
           .catch(error => {
             console.error('获取课程信息失败:', error);
@@ -110,6 +126,49 @@ export default {
       this.activeTab = newActiveTab; // 更新activeTab
       this.activeSubTab = newActiveSubTab; // 更新activeSubTab
     },
+    goToCoursePage(courseId,course_name,role) {
+      // 使用query参数传course_id
+      this.$router.push({
+        path: '/course-notifications',
+        query: {course_id: courseId , course_name: course_name, role: role},
+      });
+    }
   }
 };
 </script>
+<style scoped>
+.course-list {
+  display: flex;
+  flex-wrap: wrap; /* 允许换行 */
+  gap: 20px; /* 添加间距 */
+  margin-top: 80px;
+}
+
+.course-card {
+  width: 250px; /* 固定宽度 */
+  height: 100px; /* 固定高度 */
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 15px; /* 内边距 */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column; /* 垂直排列内容 */
+  justify-content: center; /* 垂直居中对齐内容 */
+  align-items: center; /* 水平居中对齐内容 */
+  transition: transform 0.3s; /* 添加过渡效果 */
+}
+
+.course-card:hover {
+  transform: scale(1.05); /* 鼠标悬停时放大 */
+}
+
+.course-info h3 {
+  margin: 0; /* 去掉默认边距 */
+  font-size: 18px; /* 调整标题大小 */
+}
+
+.course-info p {
+  margin: 5px 0 0; /* 调整描述的边距 */
+  color: #666; /* 设置颜色 */
+}
+</style>
